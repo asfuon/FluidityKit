@@ -19,8 +19,8 @@ public struct USBEntry: Codable {
 }
 
 public struct USBName {
-    let vendorName: String?
-    let productName: String?
+    public let vendorName: String?
+    public let productName: String?
 }
 
 public class USBIDs {
