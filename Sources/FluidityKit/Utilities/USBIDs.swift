@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct USBEntry: Codable {
+public struct USBEntry: Codable {
     let vendorID: Int
     let vendorName: String
     let devices: [USBDevice]
@@ -26,11 +26,11 @@ public struct USBName {
 public class USBIDs {
     var data: [USBEntry]
     
-    enum USBIDsFinderError: Error {
+    public enum USBIDsFinderError: Error {
         case couldNotResolveData
     }
     
-    init(from jsonData: Data) throws {
+    public init(from jsonData: Data) throws {
         let decoder = JSONDecoder()
         do {
             let entries = try decoder.decode([USBEntry].self, from: jsonData)
