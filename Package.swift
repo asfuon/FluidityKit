@@ -4,6 +4,9 @@ import PackageDescription
 
 let package = Package(
     name: "FluidityKit",
+    platforms: [
+        .macOS(.v10_15)
+    ],
     products: [
         .library(
             name: "FluidityKit",
