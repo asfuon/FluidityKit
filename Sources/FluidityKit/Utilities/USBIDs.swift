@@ -18,12 +18,12 @@ struct USBEntry: Codable {
     }
 }
 
-struct USBName {
+public struct USBName {
     let vendorName: String?
     let productName: String?
 }
 
-class USBIDs {
+public class USBIDs {
     var data: [USBEntry]
     
     enum USBIDsFinderError: Error {
@@ -40,7 +40,7 @@ class USBIDs {
         }
     }
     
-    func query(vendorID: Int, productID: Int?) -> USBName {
+    public func query(vendorID: Int, productID: Int?) -> USBName {
         var vendorName: String?
         var productName: String?
         for entry in self.data {
