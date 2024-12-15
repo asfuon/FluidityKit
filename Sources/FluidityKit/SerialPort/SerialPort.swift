@@ -25,9 +25,9 @@ public struct SerialPortMeta {
     /// The product name of the USB controller (if it has one) related to this serial port.
     public let productName: String?
     
-    /// The serial number of the USB controller (if it has one) related to this serial port.
-    public let serialNumber: String?
-    
-    /// The location ID of the USB controller (if it has one) related to this serial port.
-    public let locationID: Int?
+//    /// The serial number of the USB controller (if it has one) related to this serial port.
+//    public let serialNumber: String?
+//    
+//    /// The location ID of the USB controller (if it has one) related to this serial port.
+//    public let locationID: Int?
 }

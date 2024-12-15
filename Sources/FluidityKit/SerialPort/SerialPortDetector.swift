@@ -9,14 +9,26 @@ import Foundation
 import IOKit
 import IOKit.serial
 
-/// Detect the available serial ports on the current host (macOS only).
+/// Detector to find all available serial ports on the current host (macOS only).
 public class SerialPortDetector {
+    private let idsFinder: USBIDs
+
     /// Custom Errors of the detector
     public enum DetectorError: Error {
         case serviceMatchingError
         case portPathDetectingError
         case portPathInvalid
         case deviceClassNameInvalid
+        case jsonResolveError
+    }
+    
+    init() throws {
+        // @todo custom sources
+        guard let url = Bundle.module.url(forResource: "usb_ids", withExtension: "json"),
+              let data = try? Data(contentsOf: url) else {
+            throw DetectorError.jsonResolveError
+        }
+        self.idsFinder = try USBIDs(from: data)
     }
     
     /// Get the IO iterator of serial port.
@@ -89,11 +101,7 @@ public class SerialPortDetector {
         var parentDevice = device
         var hasUSBController = false
         var vendorID: Int?
-        var vendorName: String?
         var productID: Int?
-        var productName: String?
-        var serialNumber: String?
-        var locationID: Int?
         
         detectLoop: repeat {
             var tempParentDevice: io_object_t = 0
@@ -115,10 +123,6 @@ public class SerialPortDetector {
                 if let properties = try getDeviceProperties(parentDevice) {
                     vendorID = properties["idVendor"] as? Int
                     productID = properties["idProduct"] as? Int
-//                    vendorName = properties["USB Vendor Name"] as? String
-//                    productName = properties["USB Product Name"] as? String
-//                    serialNumber = properties["USB Serial Number"] as? String
-                    locationID = properties["locationID"] as? Int
                 }
                 break
             }
@@ -128,17 +132,19 @@ public class SerialPortDetector {
             IOObjectRelease(parentDevice)
         }
         
-        // @todo, lookup vendorName and productName from public USB vendor database
+        var resolved = USBName(vendorName: "Unknown", productName: "Unknown")
+        
+        if let vendorID = vendorID {
+            resolved = idsFinder.query(vendorID: vendorID, productID: productID)
+        }
         
         return SerialPortMeta(
             portPath: portPath,
             hasUSBController: hasUSBController,
             vendorID: vendorID,
-            vendorName: vendorName,
+            vendorName: resolved.vendorName,
             productID: productID,
-            productName: productName,
-            serialNumber: serialNumber,
-            locationID: locationID
+            productName: resolved.productName
         )
     }
 }

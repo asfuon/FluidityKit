@@ -14,7 +14,10 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "FluidityKit"),
+            name: "FluidityKit",
+            resources: [
+                .process("Resources")
+            ]),
         .testTarget(
             name: "FluidityKitTests",
             dependencies: ["FluidityKit"]
