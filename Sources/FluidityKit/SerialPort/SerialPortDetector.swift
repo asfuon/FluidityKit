@@ -11,7 +11,7 @@ import IOKit.serial
 
 /// Detector to find all available serial ports on the current host (macOS only).
 public class SerialPortDetector {
-    private let idsFinder: USBIDs
+    public let idsFinder: USBIDs
 
     /// Custom Errors of the detector
     public enum DetectorError: Error {
@@ -22,7 +22,7 @@ public class SerialPortDetector {
         case jsonResolveError
     }
     
-    init() throws {
+    public init() throws {
         // @todo custom sources
         guard let url = Bundle.module.url(forResource: "usb_ids", withExtension: "json"),
               let data = try? Data(contentsOf: url) else {
