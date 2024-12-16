@@ -34,29 +34,39 @@ public struct SerialPortMeta {
 /// Serial Port options type used across FluidityKit and Fluidity
 public struct SerialPortOptions {
     /// The baud rate used to communicate from remote to host (receive)
-    public let rxBaudRate: BaudRate
+    public var rxBaudRate: BaudRate
     
     /// The baud rate used to communicate from host to remote (send)
-    public let txBaudRate: BaudRate
+    public var txBaudRate: BaudRate
     
     /// The parity bit setting used to communicate between TX and RX
-    public let parityBit: ParityBit
+    public var parityBit: ParityBit
 }
 
 /// Centered Serial Port instance for device setting and data transmission.
 public class SerialPort {
     let metadata: SerialPortMeta
+    var options: SerialPortOptions
     var port: Int32?
     
     public enum SerialPortError: Error {
         case invalidSerialPortPath
         case invalidTransmissionDirection
         case failedToOpenSerialPort
+        case portIsClosed
     }
     
     /// Create a Serial Port instance from given metadatas.
     public init(from: SerialPortMeta) {
         self.metadata = from
+        
+        // create port options by default
+        // @todo: move the default options to another place
+        options = SerialPortOptions(
+            rxBaudRate: .baud115200,
+            txBaudRate: .baud115200,
+            parityBit: .unset
+        )
     }
     
     /// Get the port path from metadata.
@@ -98,8 +108,59 @@ public class SerialPort {
         }
     }
     
-    /// Set the options to resolve and send serial port data
-    public func setOptions() {
-        // @todo
+    /// Close serial port connection.
+    public func closePort() {
+        if let port = port {
+            close(port)
+        }
+        port = nil
+    }
+    
+    /// Update port settings based on current context options.
+    private func loadOptions() throws {
+        var payload = termios()
+        if let port = port {
+            tcgetattr(port, &payload)
+            
+            // set baud rates
+            cfsetispeed(&payload, options.rxBaudRate.value)
+            cfsetospeed(&payload, options.txBaudRate.value)
+            
+            // set parity bit
+            payload.c_cflag |= options.parityBit.value
+            
+            // apply changes
+            tcsetattr(port, TCSANOW, &payload)
+        } else {
+            throw SerialPortError.portIsClosed
+        }
+    }
+    
+    /// Set the whole options to resolve and send serial port data.
+    public func setOptions(_ payload: SerialPortOptions) throws {
+        self.options = payload
+        
+        // apply changes
+        try loadOptions()
+    }
+    
+    /// Set partial options to resolve and send serial port data.
+    public func setOptions(
+        rxBaudRate: BaudRate? = nil,
+        txBaudRate: BaudRate? = nil,
+        parityBit: ParityBit? = nil
+    ) throws {
+        if let rxBaudRate = rxBaudRate {
+            self.options.rxBaudRate = rxBaudRate
+        }
+        if let txBaudRate = txBaudRate {
+            self.options.txBaudRate = txBaudRate
+        }
+        if let parityBit = parityBit {
+            self.options.parityBit = parityBit
+        }
+        
+        // apply changes
+        try loadOptions()
     }
 }

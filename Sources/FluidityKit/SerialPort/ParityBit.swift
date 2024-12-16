@@ -9,13 +9,13 @@ import Foundation
 
 /// Pre-defined ParityBit options
 public enum ParityBit {
-    case none
+    case unset
     case odd
     case even
     
     var value: tcflag_t {
         switch self {
-        case .none:
+        case .unset:
             return 0
         case .odd:
             return tcflag_t(PARENB)
