@@ -104,6 +104,7 @@ public class SerialPortDetector {
         var hasUSBController = false
         var vendorID: String?
         var productID: String?
+        var locationID: String?
         
         detectLoop: repeat {
             var tempParentDevice: io_object_t = 0
@@ -129,6 +130,9 @@ public class SerialPortDetector {
                     if let rawPID = properties["idProduct"] {
                         productID = try convertNSCFNumberToHexString(rawPID)
                     }
+                    if let rawLID = properties["locationID"] {
+                        locationID = try convertNSCFNumberToHexString(rawLID)
+                    }
                 }
                 break
             }
@@ -150,7 +154,8 @@ public class SerialPortDetector {
             vendorID: vendorID,
             vendorName: resolved.vendorName,
             productID: productID,
-            productName: resolved.productName
+            productName: resolved.productName,
+            locationID: locationID
         )
     }
     

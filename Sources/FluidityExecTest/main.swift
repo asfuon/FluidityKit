@@ -35,6 +35,10 @@ func main() throws {
         if let pn = el.productName {
             print("Product Name: \(pn)")
         }
+        
+        if let lid = el.locationID {
+            print("Location ID: \(lid)")
+        }
     }
 }
 
