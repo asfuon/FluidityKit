@@ -30,7 +30,18 @@ class USBIDs {
         case couldNotResolveData
     }
     
-    init(from jsonData: Data) throws {
+    /// Create a USBIDs instance from data source optionally.
+    init(from jsonData: Data? = nil) throws {
+        var sourceData = Data()
+        if let jsonData = jsonData {
+            sourceData = jsonData
+        }
+        data = []
+        try loadSource(jsonData: sourceData)
+    }
+    
+    /// Load data source for USB IDs matching.
+    func loadSource(jsonData: Data) throws {
         let decoder = JSONDecoder()
         do {
             let entries = try decoder.decode([USBEntry].self, from: jsonData)
@@ -40,6 +51,7 @@ class USBIDs {
         }
     }
     
+    /// Get the property names related to the given IDs.
     func query(vendorID: String, productID: String?) -> USBName {
         var vendorName: String?
         var productName: String?

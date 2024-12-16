@@ -13,7 +13,7 @@ import IOKit.serial
 public class SerialPortDetector {
     private let idsFinder: USBIDs
 
-    /// Custom Errors of the detector
+    /// Custom Errors of the detector.
     public enum DetectorError: Error {
         case serviceMatchingError
         case portPathDetectingError
@@ -23,13 +23,22 @@ public class SerialPortDetector {
         case failedToGetSerialPortIterator
     }
     
-    public init() throws {
-        // @todo custom sources
-        guard let url = Bundle.module.url(forResource: "usb_ids", withExtension: "json"),
-              let data = try? Data(contentsOf: url) else {
-            throw DetectorError.jsonResolveError
+    /// Create a instance of SerialPortDetector.
+    public init(disbaleBuiltinUSBIDs: Bool = false) throws {
+        if (!disbaleBuiltinUSBIDs) {
+            guard let url = Bundle.module.url(forResource: "usb_ids", withExtension: "json"),
+                  let data = try? Data(contentsOf: url) else {
+                throw DetectorError.jsonResolveError
+            }
+            self.idsFinder = try USBIDs(from: data)
+        } else {
+            self.idsFinder = try USBIDs()
         }
-        self.idsFinder = try USBIDs(from: data)
+    }
+    
+    /// Reload custom data source for USB IDs finder.
+    public func reloadUSBIDSource(jsonData: Data) throws {
+        try idsFinder.loadSource(jsonData: jsonData)
     }
     
     /// Get the IO iterator of serial port.
