@@ -20,7 +20,6 @@ public class SerialPortDetector {
         case portPathInvalid
         case deviceClassNameInvalid
         case jsonResolveError
-        case invalidPropertyID
         case failedToGetSerialPortIterator
     }
     
