@@ -18,6 +18,10 @@ let package = Package(
             resources: [
                 .process("Resources")
             ]),
+        .executableTarget(
+            name: "FluidityExecTest",
+            dependencies: ["FluidityKit"]
+        ),
         .testTarget(
             name: "FluidityKitTests",
             dependencies: ["FluidityKit"]

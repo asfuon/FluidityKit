@@ -14,13 +14,13 @@ public struct SerialPortMeta {
     public let hasUSBController: Bool
     
     /// The vendor ID of the USB controller (if it has one) related to this serial port.
-    public let vendorID: Int?
+    public let vendorID: String?
     
     /// The vendor name of the USB controller (if it has one) related to this serial port.
     public let vendorName: String?
     
     /// The product ID of the USB controller (if it has one) related to this serial port.
-    public let productID: Int?
+    public let productID: String?
     
     /// The product name of the USB controller (if it has one) related to this serial port.
     public let productName: String?

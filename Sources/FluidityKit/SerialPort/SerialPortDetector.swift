@@ -11,7 +11,7 @@ import IOKit.serial
 
 /// Detector to find all available serial ports on the current host (macOS only).
 public class SerialPortDetector {
-    public let idsFinder: USBIDs
+    private let idsFinder: USBIDs
 
     /// Custom Errors of the detector
     public enum DetectorError: Error {
@@ -100,8 +100,8 @@ public class SerialPortDetector {
         // initialize current device tree and find its parrent device
         var parentDevice = device
         var hasUSBController = false
-        var vendorID: Int?
-        var productID: Int?
+        var vendorID: String?
+        var productID: String?
         
         detectLoop: repeat {
             var tempParentDevice: io_object_t = 0
@@ -121,8 +121,8 @@ public class SerialPortDetector {
             if deviceClassName.contains("USB") {
                 hasUSBController = true
                 if let properties = try getDeviceProperties(parentDevice) {
-                    vendorID = properties["idVendor"] as? Int
-                    productID = properties["idProduct"] as? Int
+                    vendorID = properties["idVendor"] as? String
+                    productID = properties["idProduct"] as? String
                 }
                 break
             }

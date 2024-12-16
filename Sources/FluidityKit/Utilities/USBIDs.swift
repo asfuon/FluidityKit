@@ -7,30 +7,30 @@
 
 import Foundation
 
-public struct USBEntry: Codable {
-    let vendorID: Int
+struct USBEntry: Codable {
+    let vendorID: String
     let vendorName: String
-    let devices: [USBDevice]
+    let devices: [USBDevice]?
     
     struct USBDevice: Codable {
-        let productID: Int
+        let productID: String
         let productName: String
     }
 }
 
-public struct USBName {
+struct USBName {
     public let vendorName: String?
     public let productName: String?
 }
 
-public class USBIDs {
+class USBIDs {
     var data: [USBEntry]
     
-    public enum USBIDsFinderError: Error {
+    enum USBIDsFinderError: Error {
         case couldNotResolveData
     }
     
-    public init(from jsonData: Data) throws {
+    init(from jsonData: Data) throws {
         let decoder = JSONDecoder()
         do {
             let entries = try decoder.decode([USBEntry].self, from: jsonData)
@@ -40,15 +40,17 @@ public class USBIDs {
         }
     }
     
-    public func query(vendorID: Int, productID: Int?) -> USBName {
+    func query(vendorID: String, productID: String?) -> USBName {
         var vendorName: String?
         var productName: String?
         for entry in self.data {
             if entry.vendorID == vendorID {
                 vendorName = entry.vendorName
-                for device in entry.devices {
-                    if (device.productID == productID) {
-                        productName = device.productName
+                if let devices = entry.devices {
+                    for device in devices {
+                        if (device.productID == productID) {
+                            productName = device.productName
+                        }
                     }
                 }
             }
