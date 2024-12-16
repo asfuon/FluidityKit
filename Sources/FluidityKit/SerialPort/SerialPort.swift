@@ -141,7 +141,9 @@ public class SerialPort {
         self.options = payload
         
         // apply changes
-        try loadOptions()
+        if port != nil {
+            try loadOptions()
+        }
     }
     
     /// Set partial options to resolve and send serial port data.
@@ -161,6 +163,8 @@ public class SerialPort {
         }
         
         // apply changes
-        try loadOptions()
+        if port != nil {
+            try loadOptions()
+        }
     }
 }
