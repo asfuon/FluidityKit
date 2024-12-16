@@ -20,6 +20,8 @@ public class SerialPortDetector {
         case portPathInvalid
         case deviceClassNameInvalid
         case jsonResolveError
+        case invalidPropertyID
+        case failedToGetSerialPortIterator
     }
     
     public init() throws {
@@ -121,8 +123,12 @@ public class SerialPortDetector {
             if deviceClassName.contains("USB") {
                 hasUSBController = true
                 if let properties = try getDeviceProperties(parentDevice) {
-                    vendorID = properties["idVendor"] as? String
-                    productID = properties["idProduct"] as? String
+                    if let rawVID = properties["idVendor"] {
+                        vendorID = try convertNSCFNumberToHexString(rawVID)
+                    }
+                    if let rawPID = properties["idProduct"] {
+                        productID = try convertNSCFNumberToHexString(rawPID)
+                    }
                 }
                 break
             }
@@ -146,5 +152,34 @@ public class SerialPortDetector {
             productID: productID,
             productName: resolved.productName
         )
+    }
+    
+    /// Discover and return all the available serial port on current system
+    public func discoverSerialPorts() throws -> [SerialPortMeta] {
+        var matchedDeviceMetas: [SerialPortMeta] = []
+        
+        let serialPortIterator = try getSerialPortIterator()
+        guard serialPortIterator != 0 else {
+            throw DetectorError.failedToGetSerialPortIterator
+        }
+        defer {
+            IOObjectRelease(serialPortIterator)
+        }
+        
+        var device: io_object_t = 0
+        repeat {
+            device = IOIteratorNext(serialPortIterator)
+            guard device != 0 else {
+                break
+            }
+            defer {
+                IOObjectRelease(device)
+            }
+            
+            let deviceMeta = try getSerialDeviceMeta(device)
+            matchedDeviceMetas.append(deviceMeta)
+        } while true
+        
+        return matchedDeviceMetas
     }
 }
