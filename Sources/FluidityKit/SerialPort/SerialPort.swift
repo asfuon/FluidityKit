@@ -41,6 +41,12 @@ public struct SerialPortOptions {
     
     /// The parity bit setting used to communicate between TX and RX
     public var parityBit: ParityBit
+    
+    /// Whether to send two stop bits in communication
+    public var useTwoStopBits: Bool
+    
+    /// The data bits size used to communication
+    public var dataBitsSize: DataBitsSize
 }
 
 /// Centered Serial Port instance for device setting and data transmission.
@@ -65,7 +71,9 @@ public class SerialPort {
         options = SerialPortOptions(
             rxBaudRate: .baud115200,
             txBaudRate: .baud115200,
-            parityBit: .unset
+            parityBit: .unset,
+            useTwoStopBits: false,
+            dataBitsSize: .bits8
         )
     }
     
@@ -129,6 +137,17 @@ public class SerialPort {
             // set parity bit
             payload.c_cflag |= options.parityBit.value
             
+            // set two stop bits usage
+            if (options.useTwoStopBits) {
+                payload.c_cflag |= tcflag_t(CSTOPB)
+            } else {
+                payload.c_cflag &= ~tcflag_t(CSTOPB)
+            }
+            
+            // set data bits size
+            payload.c_cflag &= ~tcflag_t(CSIZE)
+            payload.c_cflag |= options.dataBitsSize.value
+            
             // apply changes
             tcsetattr(port, TCSANOW, &payload)
         } else {
@@ -150,7 +169,9 @@ public class SerialPort {
     public func setOptions(
         rxBaudRate: BaudRate? = nil,
         txBaudRate: BaudRate? = nil,
-        parityBit: ParityBit? = nil
+        parityBit: ParityBit? = nil,
+        useTwoStopBits: Bool? = nil,
+        dataBitsSize: DataBitsSize? = nil
     ) throws {
         if let rxBaudRate = rxBaudRate {
             self.options.rxBaudRate = rxBaudRate
@@ -160,6 +181,12 @@ public class SerialPort {
         }
         if let parityBit = parityBit {
             self.options.parityBit = parityBit
+        }
+        if let useTwoStopBits = useTwoStopBits {
+            self.options.useTwoStopBits = useTwoStopBits
+        }
+        if let dataBitsSize = dataBitsSize {
+            self.options.dataBitsSize = dataBitsSize
         }
         
         // apply changes
