@@ -16,30 +16,26 @@ func main() throws {
     
     let result = try ins.discoverSerialPorts()
     
+    var matchedMeta: SerialPortMeta?
+    
     for el in result {
-        print("Port Path: \(el.portPath)")
-        print("USB Controller: \(el.hasUSBController ? "Yes" : "No")")
-        
-        if let vid = el.vendorID {
-            print("Vendor ID: \(vid)")
-        }
-        
-        if let vn = el.vendorName {
-            print("Vendor Name: \(vn)")
-        }
-        
-        if let pid = el.productID {
-            print("Product ID: \(pid)")
-        }
-        
-        if let pn = el.productName {
-            print("Product Name: \(pn)")
-        }
-        
-        if let lid = el.locationID {
-            print("Location ID: \(lid)")
+        if (el.portPath == "/dev/cu.usbserial-1140") {
+            matchedMeta = el
+            break
         }
     }
+    
+    guard let matchedMeta = matchedMeta else {
+        return
+    }
+    
+    let portIns = try SerialPort(from: matchedMeta)
+    
+    try portIns.openPort()
+    
+    let payload = try portIns.readData(length: 10)
+    
+    print(payload)
 }
 
 try main()

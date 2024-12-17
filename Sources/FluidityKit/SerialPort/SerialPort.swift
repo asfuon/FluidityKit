@@ -60,10 +60,13 @@ public class SerialPort {
         case invalidTransmissionDirection
         case failedToOpenSerialPort
         case portIsClosed
+        case deviceDisconnected
+        case bufferReadingError
+        case invalidReadBytes
     }
     
     /// Create a Serial Port instance from given metadatas.
-    public init(from: SerialPortMeta) {
+    public init(from: SerialPortMeta) throws {
         self.metadata = from
         
         // create port options by default
@@ -114,6 +117,8 @@ public class SerialPort {
         guard port != -1 else {
             throw SerialPortError.failedToOpenSerialPort
         }
+        
+        try loadOptions()
     }
     
     /// Close serial port connection.
@@ -147,6 +152,20 @@ public class SerialPort {
             // set data bits size
             payload.c_cflag &= ~tcflag_t(CSIZE)
             payload.c_cflag |= options.dataBitsSize.value
+            
+            // @todo: make a option
+            // disable hardware flow control
+            payload.c_cflag &= ~tcflag_t(CRTSCTS)
+            
+            // disable break signal, CR-to-NL translation,
+            // parity check, strip high bit, and software flow control
+            payload.c_cflag &= ~tcflag_t(IGNBRK | BRKINT | ICRNL | INLCR | PARMRK | INPCK | ISTRIP | IXON)
+            
+            // disable post-processing
+            payload.c_oflag &= ~tcflag_t(OCRNL | ONLCR | ONLRET | ONOCR | OFILL | OPOST)
+            
+            // disable canonical mode, echo, erasure, and signals
+            payload.c_lflag &= ~tcflag_t(ECHO | ECHONL | ICANON | IEXTEN | ISIG)
             
             // apply changes
             tcsetattr(port, TCSANOW, &payload)
@@ -193,5 +212,58 @@ public class SerialPort {
         if port != nil {
             try loadOptions()
         }
+    }
+}
+
+/// The receiver logic of Serial Port instance.
+extension SerialPort {
+    /// Function to check if port opened correctly, throws if no.
+    private func ensurePortStatus() throws {
+        guard let port = port else {
+            throw SerialPortError.portIsClosed
+        }
+
+        var fileStat: stat = stat()
+        fstat(port, &fileStat)
+        
+        print(fileStat.st_nlink)
+        
+        guard fileStat.st_nlink == 1 else {
+            throw SerialPortError.deviceDisconnected
+        }
+    }
+    
+    /// Read a single byte from serial port.
+    public func readSingleByte(into buffer: UnsafeMutablePointer<UInt8>) throws -> Int {
+        let target = try readBytes(into: buffer, length: 1)
+        return target
+    }
+    
+    /// Read bytes from serial port.
+    public func readBytes(into buffer: UnsafeMutablePointer<UInt8>, length len: Int) throws -> Int {
+        try ensurePortStatus()
+        
+        guard let port = port else {
+            throw SerialPortError.portIsClosed
+        }
+        
+        let target = read(port, buffer, len)
+        return target
+    }
+    
+    /// Read to Data type.
+    public func readData(length len: Int) throws -> Data {
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: len)
+        defer {
+            buffer.deallocate()
+        }
+        
+        let readCount = try readBytes(into: buffer, length: len)
+        
+        guard readCount > 0 else {
+            throw SerialPortError.invalidReadBytes
+        }
+        
+        return Data(bytes: buffer, count: readCount)
     }
 }
