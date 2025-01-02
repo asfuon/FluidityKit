@@ -112,7 +112,7 @@ public class SerialPort {
             throw SerialPortError.invalidTransmissionDirection
         }
         
-        port = Darwin.open(getPortPath(), flag)
+        port = Darwin.open(getPortPath(), flag | O_NOCTTY | O_EXLOCK)
         
         guard port != -1 else {
             throw SerialPortError.failedToOpenSerialPort
@@ -124,7 +124,7 @@ public class SerialPort {
     /// Close serial port connection.
     public func closePort() {
         if let port = port {
-            close(port)
+            Darwin.close(port)
         }
         port = nil
     }
@@ -155,7 +155,8 @@ public class SerialPort {
             
             // @todo: make a option
             // disable hardware flow control
-            payload.c_cflag &= ~tcflag_t(CRTSCTS)
+            payload.c_cflag &= ~tcflag_t(CRTS_IFLOW)
+            payload.c_cflag &= ~tcflag_t(CCTS_OFLOW)
             
             // disable break signal, CR-to-NL translation,
             // parity check, strip high bit, and software flow control
@@ -166,6 +167,16 @@ public class SerialPort {
             
             // disable canonical mode, echo, erasure, and signals
             payload.c_lflag &= ~tcflag_t(ECHO | ECHONL | ICANON | IEXTEN | ISIG)
+            
+            // enable receiver and set local mode
+            payload.c_cflag |= tcflag_t(CREAD | CLOCAL)
+            
+            typealias specialCharactersTuple = (VEOF: cc_t, VEOL: cc_t, VEOL2: cc_t, VERASE: cc_t, VWERASE: cc_t, VKILL: cc_t, VREPRINT: cc_t, spare1: cc_t, VINTR: cc_t, VQUIT: cc_t, VSUSP: cc_t, VDSUSP: cc_t, VSTART: cc_t, VSTOP: cc_t, VLNEXT: cc_t, VDISCARD: cc_t, VMIN: cc_t, VTIME: cc_t, VSTATUS: cc_t, spare: cc_t)
+            var specialCharacters: specialCharactersTuple = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) // NCCS = 20
+            
+            specialCharacters.VMIN = cc_t(10)
+            specialCharacters.VTIME = cc_t(0)
+            payload.c_cc = specialCharacters
             
             // apply changes
             tcsetattr(port, TCSANOW, &payload)
